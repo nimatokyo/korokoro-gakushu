@@ -156,6 +156,9 @@
     .wc-sub  { font-size: 11px; color: #5856D6; line-height: 1.4; margin-top: 1px; }
     .wc-roma { font-size: 10px; color: #aeaeb2; line-height: 1.3; }
 
+    .speakable { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+    .speakable:active { opacity: 0.6; }
+
     /* ── FLASHCARD VIEW ── */
     .fc-wrap {
       display: flex;
@@ -709,6 +712,22 @@ function saveStats() {
 }
 
 // ══════════════════════════════════════════
+//  TTS
+// ══════════════════════════════════════════
+function speak(text, lang) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  u.rate = 0.9;
+  speechSynthesis.speak(u);
+}
+function speakItem(item) {
+  if (ST.lang === 'es') speak(item.es, 'es-ES');
+  else speak(item.ko, 'ko-KR');
+}
+
+// ══════════════════════════════════════════
 //  HELPERS
 // ══════════════════════════════════════════
 function filtered() {
@@ -789,13 +808,13 @@ function renderList() {
     if (isEs) {
       html += `<div class="word-card es">
         <span class="wc-ja">${item.ja}</span>
-        <span class="wc-es">${item.es}</span>
+        <span class="wc-es speakable" data-speak="${item.es}" data-speak-lang="es-ES">${item.es}</span>
         <span class="wc-en">${item.en}</span>
       </div>`;
     } else {
       html += `<div class="word-card ko">
         <span class="wc-ja">${item.ja}</span>
-        <span class="wc-ko">${item.ko}</span>
+        <span class="wc-ko speakable" data-speak="${item.ko}" data-speak-lang="ko-KR">${item.ko}</span>
         <div><span class="wc-sub">${item.kata}</span><br><span class="wc-roma">${item.roma}</span></div>
       </div>`;
     }
@@ -817,9 +836,9 @@ function renderFlash() {
 
   let ansHtml = '';
   if (isEs) {
-    ansHtml = `<div class="fc-es">${item.es}</div><div class="fc-divider"></div><div class="fc-en">${item.en}</div>`;
+    ansHtml = `<div class="fc-es speakable" data-speak="${item.es}" data-speak-lang="es-ES">${item.es}</div><div class="fc-divider"></div><div class="fc-en">${item.en}</div>`;
   } else {
-    ansHtml = `<div class="fc-ko">${item.ko}</div><div class="fc-kata">${item.kata}</div><div class="fc-roma">${item.roma}</div>`;
+    ansHtml = `<div class="fc-ko speakable" data-speak="${item.ko}" data-speak-lang="ko-KR">${item.ko}</div><div class="fc-kata">${item.kata}</div><div class="fc-roma">${item.roma}</div>`;
   }
 
   document.getElementById('main').innerHTML = `
@@ -837,7 +856,7 @@ function renderFlash() {
       </div>
     </div>`;
 
-  document.getElementById('fc').addEventListener('click', () => { ST.fcRevealed=!ST.fcRevealed; renderFlash(); });
+  document.getElementById('fc').addEventListener('click', () => { ST.fcRevealed=!ST.fcRevealed; renderFlash(); if (ST.fcRevealed) speakItem(ST.fcItems[ST.fcIdx]); });
   document.getElementById('fcPrev').addEventListener('click', e => { e.stopPropagation(); if(ST.fcIdx>0){ST.fcIdx--;ST.fcRevealed=false;renderFlash();} });
   document.getElementById('fcNext').addEventListener('click', e => { e.stopPropagation(); ST.fcIdx=ST.fcIdx<items.length-1?ST.fcIdx+1:0; ST.fcRevealed=false; renderFlash(); });
   document.getElementById('fcShuffle').addEventListener('click', e => { e.stopPropagation(); ST.fcItems=shuffle(filtered()); ST.fcIdx=0; ST.fcRevealed=false; renderFlash(); });
@@ -881,6 +900,7 @@ function renderQuiz() {
       if (!ok) document.querySelectorAll('.quiz-opt').forEach(b => { if(b.dataset.ok==='true') b.classList.add('correct'); b.classList.add('answered'); });
       if (ok) ST.correct++; else ST.wrong++;
       saveStats(); renderStats();
+      speakItem(item);
       const res = document.getElementById('qzResult');
       res.textContent = ok ? '⭕ 正解！' : '❌ 不正解';
       res.style.color = ok ? '#34C759' : '#FF3B30';
@@ -907,6 +927,11 @@ document.getElementById('modeTabs').addEventListener('click', e => {
 document.getElementById('categories').addEventListener('click', e => {
   const btn = e.target.closest('[data-cat]'); if(!btn) return;
   ST.cat=btn.dataset.cat; resetCards(); renderAll();
+});
+document.getElementById('main').addEventListener('click', e => {
+  const el = e.target.closest('[data-speak]'); if(!el) return;
+  e.stopPropagation();
+  speak(el.dataset.speak, el.dataset.speakLang);
 });
 
 // ══════════════════════════════════════════

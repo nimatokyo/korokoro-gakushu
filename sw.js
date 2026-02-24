@@ -1,4 +1,4 @@
-const CACHE = 'langcard-v2';
+const CACHE = 'langcard-v3';
 const FILES = ['./lang-study.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
