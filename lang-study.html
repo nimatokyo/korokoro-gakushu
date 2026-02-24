@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ころころ語学倶楽部</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#007AFF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ころころ語学倶楽部">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+      background: #f2f2f7;
+      color: #1d1d1f;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #fff;
+      padding: 14px 16px 10px;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    h1 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .tab-group {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      background: #e5e5ea;
+      color: #636366;
+      transition: all 0.15s;
+    }
+
+    .tab.active-es   { background: #007AFF; color: #fff; }
+    .tab.active-ko   { background: #FF3B30; color: #fff; }
+    .tab.active-mode { background: #34C759; color: #fff; }
+
+    .categories {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 10px 16px;
+      background: #fff;
+      border-bottom: 1px solid #e5e5ea;
+      scrollbar-width: none;
+    }
+    .categories::-webkit-scrollbar { display: none; }
+
+    .cat-btn {
+      padding: 4px 12px;
+      border: 1.5px solid #c7c7cc;
+      border-radius: 12px;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      color: #3c3c43;
+      transition: all 0.15s;
+    }
+
+    .cat-btn.active {
+      background: #1d1d1f;
+      color: #fff;
+      border-color: #1d1d1f;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      padding: 8px 16px;
+      background: #fff;
+      border-bottom: 1px solid #f2f2f7;
+      font-size: 12px;
+      color: #8e8e93;
+      justify-content: center;
+    }
+
+    .stat { display: flex; align-items: center; gap: 4px; }
+    .stat-val { font-weight: 700; color: #1d1d1f; }
+
+    main {
+      padding: 12px 14px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* ── LIST VIEW ── */
+    .cat-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8e8e93;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin: 14px 2px 4px;
+    }
+
+    .list-header {
+      display: grid;
+      padding: 0 14px;
+      margin-bottom: 2px;
+    }
+    .list-header.es { grid-template-columns: 1.4fr 1fr 1fr; }
+    .list-header.ko { grid-template-columns: 1.4fr 1fr 1fr; }
+
+    .col-header {
+      font-size: 10px;
+      color: #aeaeb2;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .word-list { display: flex; flex-direction: column; gap: 5px; }
+
+    .word-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: grid;
+      gap: 4px 8px;
+      align-items: start;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+
+    .word-card.es { grid-template-columns: 1.4fr 1fr 1fr; }
+    .word-card.ko { grid-template-columns: 1.4fr 1fr 1fr; }
+
+    .wc-ja   { font-size: 13px; font-weight: 500; color: #1d1d1f; line-height: 1.4; }
+    .wc-es   { font-size: 13px; font-weight: 700; color: #007AFF; line-height: 1.4; }
+    .wc-en   { font-size: 12px; color: #8e8e93; line-height: 1.4; }
+    .wc-ko   { font-size: 16px; font-weight: 700; color: #FF3B30; line-height: 1.3; }
+    .wc-sub  { font-size: 11px; color: #5856D6; line-height: 1.4; margin-top: 1px; }
+    .wc-roma { font-size: 10px; color: #aeaeb2; line-height: 1.3; }
+
+    /* ── FLASHCARD VIEW ── */
+    .fc-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      padding-top: 16px;
+    }
+
+    .fc-progress { font-size: 13px; color: #8e8e93; }
+
+    .flashcard {
+      width: 100%;
+      max-width: 420px;
+      min-height: 220px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 24px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.08s;
+      text-align: center;
+    }
+
+    .flashcard:active { transform: scale(0.97); }
+
+    .fc-q {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .fc-tap-hint {
+      font-size: 13px;
+      color: #c7c7cc;
+      margin-top: 20px;
+    }
+
+    .fc-answer { display: none; text-align: center; margin-top: 16px; width: 100%; }
+    .flashcard.revealed .fc-tap-hint { display: none; }
+    .flashcard.revealed .fc-answer { display: block; }
+
+    .fc-divider {
+      width: 36px; height: 2px;
+      background: #e5e5ea;
+      margin: 12px auto;
+    }
+
+    .fc-es   { font-size: 22px; font-weight: 800; color: #007AFF; margin-bottom: 4px; line-height: 1.4; }
+    .fc-en   { font-size: 15px; color: #8e8e93; line-height: 1.4; }
+    .fc-ko   { font-size: 26px; font-weight: 800; color: #FF3B30; line-height: 1.3; margin-bottom: 6px; }
+    .fc-kata { font-size: 15px; color: #5856D6; margin-bottom: 4px; line-height: 1.4; }
+    .fc-roma { font-size: 12px; color: #aeaeb2; }
+
+    .fc-nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.08s;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn:hover  { opacity: 0.82; }
+    .btn:disabled { opacity: 0.3; cursor: default; }
+
+    .btn-prev    { background: #e5e5ea; color: #1d1d1f; }
+    .btn-next    { background: #1d1d1f; color: #fff; }
+    .btn-shuffle { background: #FF9500; color: #fff; }
+
+    /* ── QUIZ VIEW ── */
+    .quiz-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding-top: 16px;
+    }
+
+    .quiz-score { font-size: 13px; color: #8e8e93; }
+
+    .quiz-card {
+      width: 100%;
+      max-width: 440px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      padding: 24px 20px 20px;
+    }
+
+    .quiz-q {
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .quiz-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .quiz-opt {
+      padding: 12px 8px;
+      border: 2px solid #e5e5ea;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      text-align: center;
+      font-weight: 600;
+      transition: border-color 0.12s;
+      line-height: 1.3;
+    }
+
+    .quiz-opt small { display: block; font-size: 10px; font-weight: 400; color: #aeaeb2; margin-top: 2px; }
+    .quiz-opt:hover { border-color: #aeaeb2; }
+    .quiz-opt.correct { border-color: #34C759; background: #f0fff4; color: #1c7a38; }
+    .quiz-opt.wrong   { border-color: #FF3B30; background: #fff0f0; color: #c0160f; }
+    .quiz-opt.answered { cursor: default; }
+
+    .quiz-result {
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      min-height: 24px;
+    }
+
+    @media (max-width: 400px) {
+      .quiz-options { grid-template-columns: 1fr; }
+      .fc-q { font-size: 20px; }
+      .fc-es, .fc-ko { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>ころころ語学倶楽部 🐶</h1>
+  <div class="tab-group" id="langTabs">
+    <button class="tab" data-lang="es">🇪🇸 スペイン語</button>
+    <button class="tab" data-lang="ko">🇰🇷 韓国語</button>
+  </div>
+  <div class="tab-group" id="modeTabs">
+    <button class="tab" data-mode="list">一覧</button>
+    <button class="tab" data-mode="flash">フラッシュカード</button>
+    <button class="tab" data-mode="quiz">クイズ</button>
+  </div>
+</header>
+
+<div class="categories" id="categories"></div>
+
+<div class="stats-bar" id="statsBar" style="display:none">
+  <div class="stat">正解 <span class="stat-val" id="sCorrect">0</span></div>
+  <div class="stat">不正解 <span class="stat-val" id="sWrong">0</span></div>
+  <div class="stat">正答率 <span class="stat-val" id="sRate">—</span></div>
+</div>
+
+<main id="main"></main>
+
+<script>
+// ══════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════
+const DATA = {
+  es: [
+    // ─── 挨拶・基本 ───
+    { cat:'挨拶', ja:'こんにちは',         es:'Hola',            en:'Hello' },
+    { cat:'挨拶', ja:'おはようございます', es:'Buenos días',      en:'Good morning' },
+    { cat:'挨拶', ja:'こんばんは',         es:'Buenas noches',   en:'Good evening' },
+    { cat:'挨拶', ja:'ありがとう',         es:'Gracias',         en:'Thank you' },
+    { cat:'挨拶', ja:'どういたしまして',   es:'De nada',         en:"You're welcome" },
+    { cat:'挨拶', ja:'すみません',         es:'Perdón',          en:'Excuse me' },
+    { cat:'挨拶', ja:'ごめんなさい',       es:'Lo siento',       en:"I'm sorry" },
+    { cat:'挨拶', ja:'はい',              es:'Sí',              en:'Yes' },
+    { cat:'挨拶', ja:'いいえ',            es:'No',              en:'No' },
+    { cat:'挨拶', ja:'お願いします',       es:'Por favor',       en:'Please' },
+    { cat:'挨拶', ja:'さようなら',         es:'Adiós',           en:'Goodbye' },
+    { cat:'挨拶', ja:'また明日',          es:'Hasta mañana',    en:'See you tomorrow' },
+    { cat:'挨拶', ja:'初めまして',         es:'Mucho gusto',     en:'Nice to meet you' },
+    { cat:'挨拶', ja:'お元気ですか？',     es:'¿Cómo estás?',   en:'How are you?' },
+    { cat:'挨拶', ja:'元気です',          es:'Estoy bien',      en:"I'm fine" },
+    // ─── 数字 ───
+    { cat:'数字', ja:'1（いち）', es:'uno',    en:'one' },
+    { cat:'数字', ja:'2（に）',   es:'dos',    en:'two' },
+    { cat:'数字', ja:'3（さん）', es:'tres',   en:'three' },
+    { cat:'数字', ja:'4（し）',   es:'cuatro', en:'four' },
+    { cat:'数字', ja:'5（ご）',   es:'cinco',  en:'five' },
+    { cat:'数字', ja:'6（ろく）', es:'seis',   en:'six' },
+    { cat:'数字', ja:'7（なな）', es:'siete',  en:'seven' },
+    { cat:'数字', ja:'8（はち）', es:'ocho',   en:'eight' },
+    { cat:'数字', ja:'9（きゅう）',es:'nueve', en:'nine' },
+    { cat:'数字', ja:'10（じゅう）',es:'diez', en:'ten' },
+    { cat:'数字', ja:'100（ひゃく）',es:'cien',en:'one hundred' },
+    { cat:'数字', ja:'1000（せん）',es:'mil',  en:'one thousand' },
+    // ─── 色 ───
+    { cat:'色', ja:'赤',     es:'rojo',     en:'red' },
+    { cat:'色', ja:'青',     es:'azul',     en:'blue' },
+    { cat:'色', ja:'黄色',   es:'amarillo', en:'yellow' },
+    { cat:'色', ja:'緑',     es:'verde',    en:'green' },
+    { cat:'色', ja:'白',     es:'blanco',   en:'white' },
+    { cat:'色', ja:'黒',     es:'negro',    en:'black' },
+    { cat:'色', ja:'ピンク', es:'rosa',     en:'pink' },
+    { cat:'色', ja:'オレンジ',es:'naranja',  en:'orange' },
+    { cat:'色', ja:'紫',     es:'morado',   en:'purple' },
+    { cat:'色', ja:'茶色',   es:'marrón',   en:'brown' },
+    // ─── 食べ物・飲み物 ───
+    { cat:'食べ物', ja:'ご飯・米',  es:'arroz',    en:'rice' },
+    { cat:'食べ物', ja:'パン',     es:'pan',      en:'bread' },
+    { cat:'食べ物', ja:'肉',      es:'carne',    en:'meat' },
+    { cat:'食べ物', ja:'魚',      es:'pescado',  en:'fish' },
+    { cat:'食べ物', ja:'野菜',    es:'verdura',  en:'vegetable' },
+    { cat:'食べ物', ja:'果物',    es:'fruta',    en:'fruit' },
+    { cat:'食べ物', ja:'水',      es:'agua',     en:'water' },
+    { cat:'食べ物', ja:'コーヒー', es:'café',     en:'coffee' },
+    { cat:'食べ物', ja:'お茶',    es:'té',       en:'tea' },
+    { cat:'食べ物', ja:'ビール',  es:'cerveza',  en:'beer' },
+    { cat:'食べ物', ja:'卵',      es:'huevo',    en:'egg' },
+    { cat:'食べ物', ja:'チキン',  es:'pollo',    en:'chicken' },
+    // ─── 動詞 ───
+    { cat:'動詞', ja:'食べる',    es:'comer',     en:'to eat' },
+    { cat:'動詞', ja:'飲む',      es:'beber',     en:'to drink' },
+    { cat:'動詞', ja:'行く',      es:'ir',        en:'to go' },
+    { cat:'動詞', ja:'来る',      es:'venir',     en:'to come' },
+    { cat:'動詞', ja:'見る',      es:'ver',       en:'to see' },
+    { cat:'動詞', ja:'聞く',      es:'escuchar',  en:'to listen' },
+    { cat:'動詞', ja:'話す',      es:'hablar',    en:'to speak' },
+    { cat:'動詞', ja:'書く',      es:'escribir',  en:'to write' },
+    { cat:'動詞', ja:'読む',      es:'leer',      en:'to read' },
+    { cat:'動詞', ja:'寝る',      es:'dormir',    en:'to sleep' },
+    { cat:'動詞', ja:'買う',      es:'comprar',   en:'to buy' },
+    { cat:'動詞', ja:'好きだ',    es:'gustar',    en:'to like' },
+    { cat:'動詞', ja:'知っている', es:'saber',    en:'to know' },
+    // ─── 形容詞・感情 ───
+    { cat:'形容詞', ja:'嬉しい', es:'feliz',      en:'happy' },
+    { cat:'形容詞', ja:'悲しい', es:'triste',     en:'sad' },
+    { cat:'形容詞', ja:'怒った', es:'enojado',    en:'angry' },
+    { cat:'形容詞', ja:'疲れた', es:'cansado',    en:'tired' },
+    { cat:'形容詞', ja:'大きい', es:'grande',     en:'big' },
+    { cat:'形容詞', ja:'小さい', es:'pequeño',    en:'small' },
+    { cat:'形容詞', ja:'速い',   es:'rápido',     en:'fast' },
+    { cat:'形容詞', ja:'遅い',   es:'lento',      en:'slow' },
+    { cat:'形容詞', ja:'良い',   es:'bueno',      en:'good' },
+    { cat:'形容詞', ja:'悪い',   es:'malo',       en:'bad' },
+    { cat:'形容詞', ja:'暑い',   es:'caliente',   en:'hot' },
+    { cat:'形容詞', ja:'寒い',   es:'frío',       en:'cold' },
+    // ─── 時間・曜日 ───
+    { cat:'時間', ja:'今日',    es:'hoy',        en:'today' },
+    { cat:'時間', ja:'明日',    es:'mañana',     en:'tomorrow' },
+    { cat:'時間', ja:'昨日',    es:'ayer',       en:'yesterday' },
+    { cat:'時間', ja:'月曜日',  es:'lunes',      en:'Monday' },
+    { cat:'時間', ja:'火曜日',  es:'martes',     en:'Tuesday' },
+    { cat:'時間', ja:'水曜日',  es:'miércoles',  en:'Wednesday' },
+    { cat:'時間', ja:'木曜日',  es:'jueves',     en:'Thursday' },
+    { cat:'時間', ja:'金曜日',  es:'viernes',    en:'Friday' },
+    { cat:'時間', ja:'土曜日',  es:'sábado',     en:'Saturday' },
+    { cat:'時間', ja:'日曜日',  es:'domingo',    en:'Sunday' },
+    { cat:'時間', ja:'朝',      es:'mañana',     en:'morning' },
+    { cat:'時間', ja:'昼',      es:'tarde',      en:'afternoon' },
+    { cat:'時間', ja:'夜',      es:'noche',      en:'night' },
+    { cat:'時間', ja:'週',      es:'semana',     en:'week' },
+    { cat:'時間', ja:'月',      es:'mes',        en:'month' },
+    { cat:'時間', ja:'年',      es:'año',        en:'year' },
+    // ─── 自己紹介 ───
+    { cat:'自己紹介', ja:'私の名前はアナです',               es:'Me llamo Ana',                      en:'My name is Ana' },
+    { cat:'自己紹介', ja:'どちらから来ましたか？',         es:'¿De dónde eres?',                  en:'Where are you from?' },
+    { cat:'自己紹介', ja:'日本から来ました',              es:'Soy de Japón',                     en:"I'm from Japan" },
+    { cat:'自己紹介', ja:'私は25歳です',                    es:'Tengo 25 años',                     en:"I'm 25 years old" },
+    { cat:'自己紹介', ja:'スペイン語を勉強しています',     es:'Estudio español',                  en:"I'm studying Spanish" },
+    { cat:'自己紹介', ja:'少しだけ話せます',              es:'Hablo un poco',                    en:'I speak a little' },
+    { cat:'自己紹介', ja:'もっとゆっくり話してください',   es:'Habla más despacio, por favor',    en:'Please speak more slowly' },
+    { cat:'自己紹介', ja:'わかりません',                  es:'No entiendo',                      en:"I don't understand" },
+    { cat:'自己紹介', ja:'もう一度言ってください',         es:'¿Puede repetirlo?',               en:'Could you repeat that?' },
+    { cat:'自己紹介', ja:'英語を話せますか？',             es:'¿Hablas inglés?',                 en:'Do you speak English?' },
+    { cat:'自己紹介', ja:'「猫」はスペイン語で何と言いますか？', es:'¿Cómo se dice "cat" en español?',  en:'How do you say "cat" in Spanish?' },
+    // ─── 買い物 ───
+    { cat:'買い物', ja:'これはいくらですか？',      es:'¿Cuánto cuesta esto?',          en:'How much is this?' },
+    { cat:'買い物', ja:'これをください',            es:'Me llevo esto',                 en:"I'll take this" },
+    { cat:'買い物', ja:'Mサイズはありますか？',               es:'¿Tiene esto en talla M?',           en:'Do you have this in size M?' },
+    { cat:'買い物', ja:'高すぎます',               es:'Es muy caro',                   en:"It's too expensive" },
+    { cat:'買い物', ja:'安くなりますか？',          es:'¿Me hace un descuento?',        en:'Can you give me a discount?' },
+    { cat:'買い物', ja:'試着できますか？',          es:'¿Puedo probármelo?',            en:'Can I try it on?' },
+    { cat:'買い物', ja:'カードで払えますか？',       es:'¿Puedo pagar con tarjeta?',    en:'Can I pay by card?' },
+    { cat:'買い物', ja:'袋をください',             es:'Una bolsa, por favor',          en:'A bag, please' },
+    { cat:'買い物', ja:'領収書をください',          es:'Un recibo, por favor',          en:'A receipt, please' },
+    { cat:'買い物', ja:'見ているだけです',          es:'Solo estoy mirando',            en:"I'm just looking" },
+    // ─── レストラン ───
+    { cat:'レストラン', ja:'2人です',                       es:'Somos dos',                        en:'There are two of us' },
+    { cat:'レストラン', ja:'予約をしていますか？',            es:'¿Tiene reserva?',                  en:'Do you have a reservation?' },
+    { cat:'レストラン', ja:'注文してもいいですか？',          es:'¿Podemos pedir?',                  en:'Can we order?' },
+    { cat:'レストラン', ja:'おすすめは何ですか？',            es:'¿Qué recomienda?',                 en:'What do you recommend?' },
+    { cat:'レストラン', ja:'コーヒーをひとつください',          es:'Un café, por favor',                en:'One coffee, please' },
+    { cat:'レストラン', ja:'おいしいです！',                 es:'¡Está delicioso!',                 en:"It's delicious!" },
+    { cat:'レストラン', ja:'お会計をお願いします',            es:'La cuenta, por favor',             en:'The check, please' },
+    { cat:'レストラン', ja:'私はナッツアレルギーがあります',     es:'Soy alérgico a los frutos secos',   en:"I'm allergic to nuts" },
+    { cat:'レストラン', ja:'菜食主義です',                   es:'Soy vegetariano/a',                en:"I'm vegetarian" },
+    { cat:'レストラン', ja:'水をください',                   es:'Agua, por favor',                  en:'Water, please' },
+    // ─── 道案内 ───
+    { cat:'道案内', ja:'トイレはどこですか？',                 es:'¿Dónde está el baño?',              en:'Where is the restroom?' },
+    { cat:'道案内', ja:'右に曲がってください',       es:'Gira a la derecha',             en:'Turn right' },
+    { cat:'道案内', ja:'左に曲がってください',       es:'Gira a la izquierda',           en:'Turn left' },
+    { cat:'道案内', ja:'まっすぐ行ってください',     es:'Ve todo recto',                 en:'Go straight' },
+    { cat:'道案内', ja:'近いですか？',             es:'¿Está cerca?',                  en:'Is it close?' },
+    { cat:'道案内', ja:'遠いですか？',             es:'¿Está lejos?',                  en:'Is it far?' },
+    { cat:'道案内', ja:'迷いました',              es:'Estoy perdido/a',               en:"I'm lost" },
+    { cat:'道案内', ja:'地図を見せてもらえますか？', es:'¿Puede mostrarme en el mapa?', en:'Can you show me on the map?' },
+    { cat:'道案内', ja:'歩いて何分ですか？',        es:'¿A cuántos minutos a pie?',     en:'How many minutes on foot?' },
+    // ─── 交通機関 ───
+    { cat:'交通機関', ja:'バルセロナまで一枚ください',           es:'Un billete a Barcelona, por favor', en:'One ticket to Barcelona, please' },
+    { cat:'交通機関', ja:'何番乗り場ですか？',          es:'¿En qué andén?',               en:'Which platform?' },
+    { cat:'交通機関', ja:'何時に着きますか？',          es:'¿A qué hora llega?',           en:'What time does it arrive?' },
+    { cat:'交通機関', ja:'この電車はマドリードに止まりますか？',  es:'¿Este tren para en Madrid?',        en:'Does this train stop at Madrid?' },
+    { cat:'交通機関', ja:'タクシーを呼んでください',     es:'Llame a un taxi, por favor',   en:'Please call a taxi' },
+    { cat:'交通機関', ja:'空港まで行ってください',       es:'Al aeropuerto, por favor',     en:'To the airport, please' },
+    { cat:'交通機関', ja:'ここで止めてください',         es:'Pare aquí, por favor',         en:'Stop here, please' },
+    // ─── 天気 ───
+    { cat:'天気', ja:'今日の天気はどうですか？', es:'¿Qué tiempo hace hoy?',    en:"What's the weather like today?" },
+    { cat:'天気', ja:'晴れています',           es:'Hace sol',                 en:"It's sunny" },
+    { cat:'天気', ja:'雨が降っています',        es:'Está lloviendo',           en:"It's raining" },
+    { cat:'天気', ja:'曇っています',           es:'Está nublado',             en:"It's cloudy" },
+    { cat:'天気', ja:'暑いですね',            es:'Hace calor, ¿verdad?',     en:"It's hot, isn't it?" },
+    { cat:'天気', ja:'寒いですね',            es:'Hace frío, ¿verdad?',      en:"It's cold, isn't it?" },
+    { cat:'天気', ja:'傘を持っていますか？',    es:'¿Tienes paraguas?',        en:'Do you have an umbrella?' },
+    // ─── 体調 ───
+    { cat:'体調', ja:'気分が悪いです',          es:'Me siento mal',             en:"I'm not feeling well" },
+    { cat:'体調', ja:'頭が痛いです',           es:'Me duele la cabeza',        en:'I have a headache' },
+    { cat:'体調', ja:'お腹が痛いです',          es:'Me duele el estómago',      en:'My stomach hurts' },
+    { cat:'体調', ja:'熱があります',           es:'Tengo fiebre',              en:'I have a fever' },
+    { cat:'体調', ja:'医者に行きたいです',       es:'Quiero ir al médico',       en:'I want to see a doctor' },
+    { cat:'体調', ja:'救急車を呼んでください',   es:'Llame a una ambulancia',    en:'Call an ambulance' },
+    { cat:'体調', ja:'薬はありますか？',        es:'¿Tiene medicamentos?',      en:'Do you have medicine?' },
+    { cat:'体調', ja:'アレルギーがあります',     es:'Tengo alergia',             en:'I have an allergy' },
+    // ─── 時間・約束 ───
+    { cat:'時間・約束', ja:'何時ですか？',               es:'¿Qué hora es?',              en:'What time is it?' },
+    { cat:'時間・約束', ja:'今3時です',                       es:'Son las tres',                      en:"It's three o'clock" },
+    { cat:'時間・約束', ja:'一緒に行きましょう',          es:'Vamos juntos',               en:"Let's go together" },
+    { cat:'時間・約束', ja:'3時に会いましょう',                es:'Quedamos a las tres',               en:"Let's meet at three" },
+    { cat:'時間・約束', ja:'ちょっと待ってください',       es:'Un momento, por favor',      en:'Just a moment, please' },
+    { cat:'時間・約束', ja:'遅れます',                   es:'Voy a llegar tarde',         en:"I'll be late" },
+    { cat:'時間・約束', ja:'もうすぐ着きます',            es:'Llego pronto',               en:"I'll be there soon" },
+    { cat:'時間・約束', ja:'今日は都合が悪いです',         es:'Hoy no me viene bien',       en:"Today doesn't work for me" },
+    { cat:'時間・約束', ja:'週末はどうですか？',           es:'¿Qué tal el fin de semana?', en:'How about the weekend?' },
+  ],
+
+  ko: [
+    // ─── 挨拶・基本 ───
+    { cat:'挨拶', ja:'こんにちは',           ko:'안녕하세요',         kata:'アンニョンハセヨ',        roma:'annyeonghaseyo' },
+    { cat:'挨拶', ja:'おはようございます',   ko:'좋은 아침이에요',     kata:'チョウン アチミエヨ',     roma:'joeun achimieyo' },
+    { cat:'挨拶', ja:'ありがとうございます', ko:'감사합니다',          kata:'カムサハムニダ',          roma:'gamsahamnida' },
+    { cat:'挨拶', ja:'ありがとう（気軽に）', ko:'고마워요',            kata:'コマウォヨ',              roma:'gomawoyo' },
+    { cat:'挨拶', ja:'どういたしまして',     ko:'천만에요',            kata:'チョンマネヨ',            roma:'cheonmaneyo' },
+    { cat:'挨拶', ja:'すみません',           ko:'실례합니다',          kata:'シルレハムニダ',          roma:'sillyehamnida' },
+    { cat:'挨拶', ja:'ごめんなさい',         ko:'미안합니다',          kata:'ミアナムニダ',            roma:'mianhamnida' },
+    { cat:'挨拶', ja:'はい',                ko:'네',                  kata:'ネ',                     roma:'ne' },
+    { cat:'挨拶', ja:'いいえ',              ko:'아니요',              kata:'アニヨ',                 roma:'aniyo' },
+    { cat:'挨拶', ja:'お願いします',         ko:'부탁합니다',          kata:'プタカムニダ',            roma:'butakhamnida' },
+    { cat:'挨拶', ja:'さようなら（去る側）', ko:'안녕히 가세요',       kata:'アンニョンヒ カセヨ',     roma:'annyeonghi gaseyo' },
+    { cat:'挨拶', ja:'さようなら（残る側）', ko:'안녕히 계세요',       kata:'アンニョンヒ ケセヨ',     roma:'annyeonghi gyeseyo' },
+    { cat:'挨拶', ja:'初めまして',           ko:'처음 뵙겠습니다',     kata:'チョウム ペゲッスムニダ', roma:'cheoeum boepgesseumnida' },
+    { cat:'挨拶', ja:'お元気ですか？',       ko:'잘 지내세요?',        kata:'チャル チネセヨ',         roma:'jal jinaeseyo' },
+    { cat:'挨拶', ja:'元気です',            ko:'잘 지내요',           kata:'チャル チネヨ',           roma:'jal jinaeyo' },
+    // ─── 数字 ───
+    { cat:'数字', ja:'1（いち）',    ko:'일', kata:'イル',   roma:'il' },
+    { cat:'数字', ja:'2（に）',      ko:'이', kata:'イ',     roma:'i' },
+    { cat:'数字', ja:'3（さん）',    ko:'삼', kata:'サム',   roma:'sam' },
+    { cat:'数字', ja:'4（し）',      ko:'사', kata:'サ',     roma:'sa' },
+    { cat:'数字', ja:'5（ご）',      ko:'오', kata:'オ',     roma:'o' },
+    { cat:'数字', ja:'6（ろく）',    ko:'육', kata:'ユク',   roma:'yuk' },
+    { cat:'数字', ja:'7（なな）',    ko:'칠', kata:'チル',   roma:'chil' },
+    { cat:'数字', ja:'8（はち）',    ko:'팔', kata:'パル',   roma:'pal' },
+    { cat:'数字', ja:'9（きゅう）',  ko:'구', kata:'ク',     roma:'gu' },
+    { cat:'数字', ja:'10（じゅう）', ko:'십', kata:'シプ',   roma:'sip' },
+    { cat:'数字', ja:'100（ひゃく）',ko:'백', kata:'ペク',   roma:'baek' },
+    { cat:'数字', ja:'1000（せん）', ko:'천', kata:'チョン', roma:'cheon' },
+    // ─── 色 ───
+    { cat:'色', ja:'赤',     ko:'빨간색', kata:'パルガンセク',  roma:'ppalgan saek' },
+    { cat:'色', ja:'青',     ko:'파란색', kata:'パランセク',    roma:'paran saek' },
+    { cat:'色', ja:'黄色',   ko:'노란색', kata:'ノランセク',    roma:'noran saek' },
+    { cat:'色', ja:'緑',     ko:'초록색', kata:'チョロクセク',  roma:'chorok saek' },
+    { cat:'色', ja:'白',     ko:'하얀색', kata:'ハヤンセク',    roma:'hayan saek' },
+    { cat:'色', ja:'黒',     ko:'검은색', kata:'コムンセク',    roma:'geomeun saek' },
+    { cat:'色', ja:'ピンク', ko:'분홍색', kata:'ブノンセク',    roma:'bunhong saek' },
+    { cat:'色', ja:'オレンジ',ko:'주황색',kata:'チュファンセク', roma:'juhwang saek' },
+    { cat:'色', ja:'紫',     ko:'보라색', kata:'ポラセク',      roma:'bora saek' },
+    // ─── 食べ物・飲み物 ───
+    { cat:'食べ物', ja:'ご飯',    ko:'밥',   kata:'パプ',     roma:'bap' },
+    { cat:'食べ物', ja:'パン',    ko:'빵',   kata:'パン',     roma:'ppang' },
+    { cat:'食べ物', ja:'肉',     ko:'고기',  kata:'コギ',     roma:'gogi' },
+    { cat:'食べ物', ja:'魚',     ko:'생선',  kata:'センソン',  roma:'saengson' },
+    { cat:'食べ物', ja:'野菜',   ko:'채소',  kata:'チェソ',   roma:'chaeso' },
+    { cat:'食べ物', ja:'果物',   ko:'과일',  kata:'クアイル',  roma:'gwail' },
+    { cat:'食べ物', ja:'水',     ko:'물',    kata:'ムル',     roma:'mul' },
+    { cat:'食べ物', ja:'コーヒー',ko:'커피',  kata:'コピ',     roma:'keopi' },
+    { cat:'食べ物', ja:'お茶',   ko:'차',    kata:'チャ',     roma:'cha' },
+    { cat:'食べ物', ja:'ビール', ko:'맥주',  kata:'メクチュ',  roma:'maekju' },
+    { cat:'食べ物', ja:'卵',     ko:'달걀',  kata:'タルギャル', roma:'dalgyal' },
+    { cat:'食べ物', ja:'チキン', ko:'치킨',  kata:'チキン',   roma:'chikin' },
+    // ─── 動詞 ───
+    { cat:'動詞', ja:'食べる',    ko:'먹다',    kata:'モクタ',    roma:'meokda' },
+    { cat:'動詞', ja:'飲む',      ko:'마시다',  kata:'マシダ',    roma:'masida' },
+    { cat:'動詞', ja:'行く',      ko:'가다',    kata:'カダ',      roma:'gada' },
+    { cat:'動詞', ja:'来る',      ko:'오다',    kata:'オダ',      roma:'oda' },
+    { cat:'動詞', ja:'見る',      ko:'보다',    kata:'ポダ',      roma:'boda' },
+    { cat:'動詞', ja:'聞く',      ko:'듣다',    kata:'トゥッタ',   roma:'deutda' },
+    { cat:'動詞', ja:'話す',      ko:'말하다',  kata:'マラダ',    roma:'malhada' },
+    { cat:'動詞', ja:'書く',      ko:'쓰다',    kata:'スダ',      roma:'sseuda' },
+    { cat:'動詞', ja:'読む',      ko:'읽다',    kata:'イッタ',    roma:'ikda' },
+    { cat:'動詞', ja:'寝る',      ko:'자다',    kata:'チャダ',    roma:'jada' },
+    { cat:'動詞', ja:'起きる',    ko:'일어나다', kata:'イロナダ',  roma:'ireonada' },
+    { cat:'動詞', ja:'買う',      ko:'사다',    kata:'サダ',      roma:'sada' },
+    { cat:'動詞', ja:'好きだ',    ko:'좋아하다', kata:'チョアハダ', roma:'joahada' },
+    { cat:'動詞', ja:'知っている', ko:'알다',   kata:'アルダ',    roma:'alda' },
+    // ─── 形容詞・感情 ───
+    { cat:'形容詞', ja:'嬉しい', ko:'기쁘다',   kata:'キップダ',   roma:'gippeuda' },
+    { cat:'形容詞', ja:'悲しい', ko:'슬프다',   kata:'スルプダ',   roma:'seulpeuda' },
+    { cat:'形容詞', ja:'怒った', ko:'화가 나다', kata:'ファガ ナダ', roma:'hwaga nada' },
+    { cat:'形容詞', ja:'疲れた', ko:'피곤하다',  kata:'ピゴナダ',   roma:'pigonhada' },
+    { cat:'形容詞', ja:'大きい', ko:'크다',     kata:'クダ',       roma:'keuda' },
+    { cat:'形容詞', ja:'小さい', ko:'작다',     kata:'チャクタ',   roma:'jakda' },
+    { cat:'形容詞', ja:'速い',   ko:'빠르다',   kata:'パルダ',     roma:'ppareuda' },
+    { cat:'形容詞', ja:'遅い',   ko:'느리다',   kata:'ヌリダ',     roma:'neurida' },
+    { cat:'形容詞', ja:'良い',   ko:'좋다',     kata:'チョッタ',   roma:'jota' },
+    { cat:'形容詞', ja:'悪い',   ko:'나쁘다',   kata:'ナップダ',   roma:'nappeuda' },
+    { cat:'形容詞', ja:'暑い',   ko:'덥다',     kata:'トプタ',     roma:'deopda' },
+    { cat:'形容詞', ja:'寒い',   ko:'춥다',     kata:'チュプタ',   roma:'chupda' },
+    // ─── 時間・曜日 ───
+    { cat:'時間', ja:'今日',    ko:'오늘',   kata:'オヌル',    roma:'oneul' },
+    { cat:'時間', ja:'明日',    ko:'내일',   kata:'ネイル',    roma:'naeil' },
+    { cat:'時間', ja:'昨日',    ko:'어제',   kata:'オジェ',    roma:'eoje' },
+    { cat:'時間', ja:'月曜日',  ko:'월요일', kata:'ウォリョイル', roma:'woryoil' },
+    { cat:'時間', ja:'火曜日',  ko:'화요일', kata:'ファヨイル',  roma:'hwayoil' },
+    { cat:'時間', ja:'水曜日',  ko:'수요일', kata:'スヨイル',   roma:'suyoil' },
+    { cat:'時間', ja:'木曜日',  ko:'목요일', kata:'モギョイル',  roma:'mogyoil' },
+    { cat:'時間', ja:'金曜日',  ko:'금요일', kata:'クミョイル',  roma:'geumyoil' },
+    { cat:'時間', ja:'土曜日',  ko:'토요일', kata:'トヨイル',   roma:'toyoil' },
+    { cat:'時間', ja:'日曜日',  ko:'일요일', kata:'イリョイル',  roma:'iryoil' },
+    { cat:'時間', ja:'朝',      ko:'아침',   kata:'アチム',    roma:'achim' },
+    { cat:'時間', ja:'昼',      ko:'점심',   kata:'チョムシム', roma:'jeomsim' },
+    { cat:'時間', ja:'夜',      ko:'밤',     kata:'パム',      roma:'bam' },
+    { cat:'時間', ja:'週',      ko:'주',     kata:'チュ',      roma:'ju' },
+    { cat:'時間', ja:'月',      ko:'월',     kata:'ウォル',    roma:'wol' },
+    { cat:'時間', ja:'年',      ko:'년',     kata:'ニョン',    roma:'nyeon' },
+    // ─── 自己紹介 ───
+    { cat:'自己紹介', ja:'私の名前はミナです',                ko:'제 이름은 미나예요',                  kata:'チェ イルムン ミナエヨ',              roma:'je ireumeun minaeyo' },
+    { cat:'自己紹介', ja:'どちらから来ましたか？',         ko:'어디서 오셨어요?',                kata:'オディソ オショッソヨ',               roma:'eodiseo osyeosseoyo' },
+    { cat:'自己紹介', ja:'日本から来ました',              ko:'일본에서 왔어요',                 kata:'イルボネソ ワッソヨ',                roma:'ilboneseo wasseoyo' },
+    { cat:'自己紹介', ja:'私は25歳です',                    ko:'저는 스물다섯 살이에요',               kata:'チョヌン スムルダソッ サリエヨ',       roma:'jeoneun seumuldaseos salieyo' },
+    { cat:'自己紹介', ja:'韓国語を勉強しています',         ko:'한국어를 공부하고 있어요',          kata:'ハングゴルル コンブハゴ イッソヨ',     roma:'hangugeoreul gongbuhago isseoyo' },
+    { cat:'自己紹介', ja:'少しだけ話せます',              ko:'조금밖에 못 해요',                 kata:'チョグムバッケ モッ ヘヨ',            roma:'jogeumbaкke mot haeyo' },
+    { cat:'自己紹介', ja:'もっとゆっくり話してください',   ko:'좀 더 천천히 말해 주세요',          kata:'チョム ト チョンチョニ マレ チュセヨ', roma:'jom deo cheoncheonhi malhae juseyo' },
+    { cat:'自己紹介', ja:'わかりません',                  ko:'모르겠어요',                      kata:'モルゲッソヨ',                       roma:'moreugesseoyo' },
+    { cat:'自己紹介', ja:'もう一度言ってください',         ko:'다시 한번 말해 주세요',             kata:'タシ ハンボン マレ チュセヨ',         roma:'dasi hanbeon malhae juseyo' },
+    { cat:'自己紹介', ja:'日本語を話せますか？',           ko:'일본어 할 줄 아세요?',             kata:'イルボノ ハル チュル アセヨ',         roma:'ilbono hal jul aseyo' },
+    { cat:'自己紹介', ja:'この言葉は韓国語で何と言いますか？',  ko:'이 단어 한국어로 어떻게 말해요?',       kata:'イ タノ ハングゴロ オットケ マレヨ',  roma:'i daneo hangugeoro eotteoke malhaeyo' },
+    // ─── 買い物 ───
+    { cat:'買い物', ja:'これはいくらですか？', ko:'이거 얼마예요?',            kata:'イゴ オルマエヨ',            roma:'igo eolmaeyo' },
+    { cat:'買い物', ja:'これをください',       ko:'이거 주세요',               kata:'イゴ チュセヨ',              roma:'igo juseyo' },
+    { cat:'買い物', ja:'Mサイズはありますか？',               ko:'M사이즈 있어요?',                    kata:'エム サイジュ イッソヨ',             roma:'em saijeu isseoyo' },
+    { cat:'買い物', ja:'高すぎます',          ko:'너무 비싸요',               kata:'ノム ビッサヨ',              roma:'neomu bissayo' },
+    { cat:'買い物', ja:'試着できますか？',     ko:'입어볼 수 있어요?',          kata:'イボボル ス イッソヨ',       roma:'ibeobol su isseoyo' },
+    { cat:'買い物', ja:'カードで払えますか？', ko:'카드로 계산할 수 있어요?',    kata:'カドゥロ ケサナル ス イッソヨ', roma:'kadeuro gyesanal su isseoyo' },
+    { cat:'買い物', ja:'袋をください',        ko:'봉투 주세요',               kata:'ポントゥ チュセヨ',          roma:'bongtu juseyo' },
+    { cat:'買い物', ja:'領収書をください',     ko:'영수증 주세요',             kata:'ヨンスジュン チュセヨ',      roma:'yeongsujeung juseyo' },
+    { cat:'買い物', ja:'見ているだけです',     ko:'그냥 보는 거예요',           kata:'クニャン ポヌン ゴエヨ',     roma:'geunyang poneun geoyeyo' },
+    // ─── レストラン ───
+    { cat:'レストラン', ja:'2人です',              ko:'두 명이에요',              kata:'ドゥ ミョンイエヨ',            roma:'du myeongieyo' },
+    { cat:'レストラン', ja:'注文してもいいですか？', ko:'주문해도 될까요?',          kata:'チュムネド テルッカヨ',        roma:'jumunhaedo doelkkayo' },
+    { cat:'レストラン', ja:'おすすめは何ですか？',   ko:'추천 메뉴가 뭐예요?',       kata:'チュチョン メニュガ ムォエヨ', roma:'chucheon menyuga mwoeyo' },
+    { cat:'レストラン', ja:'コーヒーをください',               ko:'커피 주세요',                        kata:'コピ チュセヨ',                     roma:'keopi juseyo' },
+    { cat:'レストラン', ja:'おいしいです！',         ko:'맛있어요!',                kata:'マシッソヨ',                roma:'massisseoyo' },
+    { cat:'レストラン', ja:'お会計をお願いします',    ko:'계산해 주세요',             kata:'ケサネ チュセヨ',            roma:'gyesanhae juseyo' },
+    { cat:'レストラン', ja:'私はナッツアレルギーがあります',    ko:'저는 견과류 알레르기가 있어요',         kata:'チョヌン キョングアリュ アルレルギガ イッソヨ', roma:'jeoneun gyeongwaryu allergiga isseoyo' },
+    { cat:'レストラン', ja:'菜食主義です',           ko:'채식주의자예요',             kata:'チェシクチュイジャエヨ',     roma:'chaesikjuuijaeyo' },
+    { cat:'レストラン', ja:'水をください',           ko:'물 주세요',                kata:'ムル チュセヨ',             roma:'mul juseyo' },
+    // ─── 道案内 ───
+    { cat:'道案内', ja:'トイレはどこですか？',                ko:'화장실이 어디에 있어요?',              kata:'ファジャンシリ オディエ イッソヨ',    roma:'hwajangsiri eodie isseoyo' },
+    { cat:'道案内', ja:'右に曲がってください',        ko:'오른쪽으로 가세요',          kata:'オルンチョグロ カセヨ',      roma:'oreunjjogeuro gaseyo' },
+    { cat:'道案内', ja:'左に曲がってください',        ko:'왼쪽으로 가세요',           kata:'ウェンチョグロ カセヨ',      roma:'oenjjogeuro gaseyo' },
+    { cat:'道案内', ja:'まっすぐ行ってください',      ko:'직진하세요',               kata:'チクチナセヨ',              roma:'jikjinhaseyo' },
+    { cat:'道案内', ja:'近いですか？',              ko:'가까워요?',                 kata:'カッカウォヨ',              roma:'gakkawoyo' },
+    { cat:'道案内', ja:'迷いました',               ko:'길을 잃어버렸어요',           kata:'キルル イロボリョッソヨ',     roma:'gireul ireobeoryeosseoyo' },
+    { cat:'道案内', ja:'地図を見せてもらえますか？',  ko:'지도에서 알려 주실 수 있어요?', kata:'チドエソ アルリョ チュシル ス イッソヨ', roma:'jidoeseo allyeo jusil su isseoyo' },
+    { cat:'道案内', ja:'歩いて何分ですか？',         ko:'걸어서 몇 분이에요?',        kata:'コロソ ミョッ プニエヨ',     roma:'georeoseo myeot bunieyo' },
+    // ─── 交通機関 ───
+    { cat:'交通機関', ja:'ソウルまで一枚ください',              ko:'서울까지 한 장 주세요',               kata:'ソウルカジ ハン チャン チュセヨ',     roma:'seoulkkaji han jang juseyo' },
+    { cat:'交通機関', ja:'何号線ですか？',         ko:'몇 호선이에요?',           kata:'ミョッ ホソニエヨ',          roma:'myeot hoseonieyo' },
+    { cat:'交通機関', ja:'何時に着きますか？',      ko:'몇 시에 도착해요?',        kata:'ミョッ シエ トチャケヨ',     roma:'myeot sie dochakhaeyo' },
+    { cat:'交通機関', ja:'この電車はソウル駅に止まりますか？',  ko:'이 기차 서울역에 서요?',               kata:'イ キチャ ソウリョゲ ソヨ',           roma:'i gicha seoullryeoge seoyo' },
+    { cat:'交通機関', ja:'タクシーを呼んでください', ko:'택시 불러 주세요',          kata:'テクシ ブルロ チュセヨ',     roma:'taeksi bulleo juseyo' },
+    { cat:'交通機関', ja:'空港まで行ってください',   ko:'공항까지 가 주세요',        kata:'コンハンカジ カ チュセヨ',   roma:'gonghangkkaji ga juseyo' },
+    { cat:'交通機関', ja:'ここで止めてください',     ko:'여기서 세워 주세요',        kata:'ヨギソ セウォ チュセヨ',     roma:'yeogiseo sewo juseyo' },
+    // ─── 天気 ───
+    { cat:'天気', ja:'今日の天気はどうですか？', ko:'오늘 날씨가 어때요?',  kata:'オヌル ナルシガ オッテヨ', roma:'oneul nalssiga eottaeyo' },
+    { cat:'天気', ja:'晴れています',           ko:'맑아요',              kata:'マルガヨ',              roma:'malgayo' },
+    { cat:'天気', ja:'雨が降っています',        ko:'비가 와요',            kata:'ピガ ワヨ',             roma:'biga wayo' },
+    { cat:'天気', ja:'曇っています',           ko:'흐려요',              kata:'フリョヨ',              roma:'heullyeoyo' },
+    { cat:'天気', ja:'暑いですね',            ko:'덥죠?',               kata:'トプチョ',             roma:'deopjyo' },
+    { cat:'天気', ja:'寒いですね',            ko:'춥죠?',               kata:'チュプチョ',            roma:'chupjyo' },
+    { cat:'天気', ja:'傘を持っていますか？',    ko:'우산 있어요?',          kata:'ウサン イッソヨ',        roma:'usan isseoyo' },
+    // ─── 体調 ───
+    { cat:'体調', ja:'気分が悪いです',        ko:'몸이 안 좋아요',        kata:'モミ アン チョアヨ',     roma:'momi an joayo' },
+    { cat:'体調', ja:'頭が痛いです',         ko:'머리가 아파요',          kata:'モリガ アパヨ',          roma:'moriga apayo' },
+    { cat:'体調', ja:'お腹が痛いです',        ko:'배가 아파요',           kata:'ペガ アパヨ',            roma:'baega apayo' },
+    { cat:'体調', ja:'熱があります',         ko:'열이 있어요',           kata:'ヨリ イッソヨ',          roma:'yeori isseoyo' },
+    { cat:'体調', ja:'医者に行きたいです',     ko:'병원에 가고 싶어요',     kata:'ピョンウォネ カゴ シポヨ', roma:'byeongwone gago sipeoyo' },
+    { cat:'体調', ja:'救急車を呼んでください', ko:'구급차 불러 주세요',     kata:'クグプチャ ブルロ チュセヨ', roma:'gugeupcha bulleo juseyo' },
+    { cat:'体調', ja:'薬はありますか？',      ko:'약 있어요?',            kata:'ヤク イッソヨ',          roma:'yak isseoyo' },
+    { cat:'体調', ja:'アレルギーがあります',   ko:'알레르기 있어요',        kata:'アルレルギ イッソヨ',     roma:'allereugi isseoyo' },
+    // ─── 時間・約束 ───
+    { cat:'時間・約束', ja:'何時ですか？',            ko:'몇 시예요?',            kata:'ミョッ シエヨ',           roma:'myeot siyeyo' },
+    { cat:'時間・約束', ja:'今3時です',                      ko:'지금 3시예요',                       kata:'チグム セシエヨ',                   roma:'jigeum sesiyeyo' },
+    { cat:'時間・約束', ja:'一緒に行きましょう',        ko:'같이 가요',             kata:'カチ カヨ',               roma:'gachi gayo' },
+    { cat:'時間・約束', ja:'3時に会いましょう',               ko:'3시에 만나요',                       kata:'セシエ マンナヨ',                   roma:'sesie mannayo' },
+    { cat:'時間・約束', ja:'ちょっと待ってください',     ko:'잠깐만요',              kata:'チャムッカンマニョ',       roma:'jamkkanmanyo' },
+    { cat:'時間・約束', ja:'遅れます',                ko:'늦을 것 같아요',         kata:'ヌジュル ゴッ カタヨ',     roma:'neujeul geot gatayo' },
+    { cat:'時間・約束', ja:'もうすぐ着きます',          ko:'곧 도착해요',            kata:'コッ トチャケヨ',          roma:'got dochakhaeyo' },
+    { cat:'時間・約束', ja:'今日は都合が悪いです',       ko:'오늘은 좀 어려워요',      kata:'オヌルン チョム オリョウォヨ', roma:'oneureun jom eoryeowoyo' },
+    { cat:'時間・約束', ja:'週末はどうですか？',         ko:'주말은 어때요?',         kata:'チュマルン オッテヨ',      roma:'jumalеun eottaeyo' },
+  ]
+};
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const ST = {
+  lang: 'es', mode: 'list', cat: 'すべて',
+  fcItems: [], fcIdx: 0, fcRevealed: false,
+  qzItems: [], qzIdx: 0, qzAnswered: false,
+  correct: 0, wrong: 0,
+};
+
+function loadStats() {
+  try { const s = JSON.parse(localStorage.getItem('lc-stats') || '{}'); ST.correct = s.correct||0; ST.wrong = s.wrong||0; } catch(e) {}
+}
+function saveStats() {
+  localStorage.setItem('lc-stats', JSON.stringify({ correct: ST.correct, wrong: ST.wrong }));
+}
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function filtered() {
+  const items = DATA[ST.lang];
+  return ST.cat === 'すべて' ? items : items.filter(i => i.cat === ST.cat);
+}
+function cats() {
+  return ['すべて', ...new Set(DATA[ST.lang].map(i => i.cat))];
+}
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+// ══════════════════════════════════════════
+//  RENDER: shared
+// ══════════════════════════════════════════
+function renderAll() {
+  renderLangTabs(); renderModeTabs(); renderCats(); renderStats();
+  if (ST.mode==='list')  renderList();
+  if (ST.mode==='flash') renderFlash();
+  if (ST.mode==='quiz')  renderQuiz();
+}
+function renderLangTabs() {
+  document.querySelectorAll('#langTabs .tab').forEach(t => {
+    t.className = 'tab' + (t.dataset.lang===ST.lang ? ` active-${ST.lang}` : '');
+  });
+}
+function renderModeTabs() {
+  document.querySelectorAll('#modeTabs .tab').forEach(t => {
+    t.className = 'tab' + (t.dataset.mode===ST.mode ? ' active-mode' : '');
+  });
+}
+function renderCats() {
+  document.getElementById('categories').innerHTML = cats().map(c =>
+    `<button class="cat-btn${c===ST.cat?' active':''}" data-cat="${c}">${c}</button>`
+  ).join('');
+}
+function renderStats() {
+  const bar = document.getElementById('statsBar');
+  bar.style.display = ST.mode==='list' ? 'none' : 'flex';
+  document.getElementById('sCorrect').textContent = ST.correct;
+  document.getElementById('sWrong').textContent   = ST.wrong;
+  const t = ST.correct+ST.wrong;
+  document.getElementById('sRate').textContent = t ? Math.round(ST.correct/t*100)+'%' : '—';
+}
+
+// ══════════════════════════════════════════
+//  RENDER: LIST
+// ══════════════════════════════════════════
+function renderList() {
+  const items = filtered();
+  const isEs = ST.lang === 'es';
+  let html = '';
+
+  if (isEs) {
+    html += `<div class="list-header es">
+      <span class="col-header">日本語</span>
+      <span class="col-header">Español</span>
+      <span class="col-header">English</span>
+    </div>`;
+  } else {
+    html += `<div class="list-header ko">
+      <span class="col-header">日本語</span>
+      <span class="col-header">한국어</span>
+      <span class="col-header">読み / Roma</span>
+    </div>`;
+  }
+
+  html += '<div class="word-list">';
+  let lastCat = '';
+  for (const item of items) {
+    if (item.cat !== lastCat) {
+      lastCat = item.cat;
+      html += `<div class="cat-label">${item.cat}</div>`;
+    }
+    if (isEs) {
+      html += `<div class="word-card es">
+        <span class="wc-ja">${item.ja}</span>
+        <span class="wc-es">${item.es}</span>
+        <span class="wc-en">${item.en}</span>
+      </div>`;
+    } else {
+      html += `<div class="word-card ko">
+        <span class="wc-ja">${item.ja}</span>
+        <span class="wc-ko">${item.ko}</span>
+        <div><span class="wc-sub">${item.kata}</span><br><span class="wc-roma">${item.roma}</span></div>
+      </div>`;
+    }
+  }
+  html += '</div>';
+  document.getElementById('main').innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+//  RENDER: FLASHCARD
+// ══════════════════════════════════════════
+function renderFlash() {
+  const items = ST.fcItems;
+  if (!items.length) { document.getElementById('main').innerHTML = '<p style="text-align:center;color:#8e8e93;padding:40px">カードがありません</p>'; return; }
+
+  const item = items[ST.fcIdx];
+  const isEs = ST.lang === 'es';
+  const rev  = ST.fcRevealed;
+
+  let ansHtml = '';
+  if (isEs) {
+    ansHtml = `<div class="fc-es">${item.es}</div><div class="fc-divider"></div><div class="fc-en">${item.en}</div>`;
+  } else {
+    ansHtml = `<div class="fc-ko">${item.ko}</div><div class="fc-kata">${item.kata}</div><div class="fc-roma">${item.roma}</div>`;
+  }
+
+  document.getElementById('main').innerHTML = `
+    <div class="fc-wrap">
+      <div class="fc-progress">${ST.fcIdx+1} / ${items.length}</div>
+      <div class="flashcard${rev?' revealed':''}" id="fc">
+        <div class="fc-q">${item.ja}</div>
+        <div class="fc-tap-hint">タップして答えを表示</div>
+        <div class="fc-answer">${ansHtml}</div>
+      </div>
+      <div class="fc-nav">
+        <button class="btn btn-prev" id="fcPrev" ${ST.fcIdx===0?'disabled':''}>← 前</button>
+        <button class="btn btn-shuffle" id="fcShuffle">シャッフル</button>
+        <button class="btn btn-next" id="fcNext">${ST.fcIdx===items.length-1?'最初へ':'次 →'}</button>
+      </div>
+    </div>`;
+
+  document.getElementById('fc').addEventListener('click', () => { ST.fcRevealed=!ST.fcRevealed; renderFlash(); });
+  document.getElementById('fcPrev').addEventListener('click', e => { e.stopPropagation(); if(ST.fcIdx>0){ST.fcIdx--;ST.fcRevealed=false;renderFlash();} });
+  document.getElementById('fcNext').addEventListener('click', e => { e.stopPropagation(); ST.fcIdx=ST.fcIdx<items.length-1?ST.fcIdx+1:0; ST.fcRevealed=false; renderFlash(); });
+  document.getElementById('fcShuffle').addEventListener('click', e => { e.stopPropagation(); ST.fcItems=shuffle(filtered()); ST.fcIdx=0; ST.fcRevealed=false; renderFlash(); });
+}
+
+// ══════════════════════════════════════════
+//  RENDER: QUIZ
+// ══════════════════════════════════════════
+function renderQuiz() {
+  const items = ST.qzItems;
+  const allItems = DATA[ST.lang];
+  if (items.length < 4) { document.getElementById('main').innerHTML = '<p style="text-align:center;color:#8e8e93;padding:40px">クイズには4問以上必要です</p>'; return; }
+
+  const item  = items[ST.qzIdx % items.length];
+  const isEs  = ST.lang === 'es';
+  const wrong = shuffle(allItems.filter(i => i!==item)).slice(0,3);
+  const opts  = shuffle([item,...wrong]);
+
+  const optHtml = opts.map((o,i) => {
+    const label = isEs ? o.es : o.ko;
+    const sub   = isEs ? o.en : o.kata;
+    return `<button class="quiz-opt" data-i="${i}" data-ok="${o===item}">${label}<small>${sub}</small></button>`;
+  }).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="quiz-wrap">
+      <div class="quiz-score">正解 ${ST.correct} / ${ST.correct+ST.wrong} 問</div>
+      <div class="quiz-card">
+        <div class="quiz-q">${item.ja}</div>
+        <div class="quiz-options">${optHtml}</div>
+      </div>
+      <div class="quiz-result" id="qzResult"></div>
+    </div>`;
+
+  document.querySelectorAll('.quiz-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (ST.qzAnswered) return;
+      ST.qzAnswered = true;
+      const ok = btn.dataset.ok === 'true';
+      btn.classList.add(ok ? 'correct' : 'wrong', 'answered');
+      if (!ok) document.querySelectorAll('.quiz-opt').forEach(b => { if(b.dataset.ok==='true') b.classList.add('correct'); b.classList.add('answered'); });
+      if (ok) ST.correct++; else ST.wrong++;
+      saveStats(); renderStats();
+      const res = document.getElementById('qzResult');
+      res.textContent = ok ? '⭕ 正解！' : '❌ 不正解';
+      res.style.color = ok ? '#34C759' : '#FF3B30';
+      setTimeout(() => { ST.qzIdx++; ST.qzAnswered=false; renderQuiz(); }, 1400);
+    });
+  });
+}
+
+// ══════════════════════════════════════════
+//  EVENTS
+// ══════════════════════════════════════════
+function resetCards() {
+  ST.fcItems=shuffle(filtered()); ST.fcIdx=0; ST.fcRevealed=false;
+  ST.qzItems=shuffle(filtered()); ST.qzIdx=0; ST.qzAnswered=false;
+}
+document.getElementById('langTabs').addEventListener('click', e => {
+  const btn = e.target.closest('[data-lang]'); if(!btn) return;
+  ST.lang=btn.dataset.lang; ST.cat='すべて'; resetCards(); renderAll();
+});
+document.getElementById('modeTabs').addEventListener('click', e => {
+  const btn = e.target.closest('[data-mode]'); if(!btn) return;
+  ST.mode=btn.dataset.mode; resetCards(); renderAll();
+});
+document.getElementById('categories').addEventListener('click', e => {
+  const btn = e.target.closest('[data-cat]'); if(!btn) return;
+  ST.cat=btn.dataset.cat; resetCards(); renderAll();
+});
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+loadStats();
+resetCards();
+renderAll();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+}
+</script>
+</body>
+</html>
